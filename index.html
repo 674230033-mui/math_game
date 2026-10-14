@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MATH PUZZLE BUILDER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Mitr', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .blocky-box {
+            border: 4px solid #000;
+            box-shadow: 6px 6px 0px 0px #000;
+        }
+        .blocky-btn {
+            border: 4px solid #000;
+            box-shadow: 4px 4px 0px 0px #000;
+            transition: all 0.1s ease;
+        }
+        .blocky-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0px 0px 0px 0px #000;
+        }
+        @keyframes pulse-border {
+            0%, 100% { border-color: #000; }
+            50% { border-color: #f59e0b; }
+        }
+        .slot-dashed {
+            border: 3px dashed #000;
+            animation: pulse-border 1.5s infinite;
+        }
+        @media print {
+            body * { visibility: hidden; }
+            #printable-cert, #printable-cert * { visibility: visible; }
+            #printable-cert {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                border: 8px solid #000 !important;
+                box-shadow: none !important;
+            }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div id="app" class="w-full max-w-4xl">
+
+        <!-- SCREEN 1: HOME SCREEN -->
+        <div id="screen-home" class="blocky-box bg-yellow-100 p-8 text-center rounded-lg space-y-6">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 tracking-wide">🧩 MATH PUZZLE BUILDER</h1>
+            <p class="text-gray-700 text-lg">เกมปริศนาคณิตศาสตร์สำหรับสร้างตรรกะและการคิดวิเคราะห์</p>
+            <div class="flex flex-col md:flex-row justify-center gap-4 pt-4">
+                <button onclick="startGame()" class="blocky-btn bg-emerald-400 hover:bg-emerald-500 text-black font-bold text-xl px-8 py-3 rounded">
+                    ▶ เริ่มเล่นเกม (20 ด่าน)
+                </button>
+                <button onclick="switchScreen('lesson')" class="blocky-btn bg-sky-300 hover:bg-sky-400 text-black font-bold text-xl px-8 py-3 rounded">
+                    📚 บทเรียน Interactive
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: LESSON SCREEN (5 TABS) -->
+        <div id="screen-lesson" class="blocky-box bg-white p-6 rounded-lg hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">📚 คู่มือการเรียนรู้คณิตศาสตร์</h2>
+                <button onclick="switchScreen('home')" class="blocky-btn bg-rose-400 px-4 py-1 rounded font-bold">กลับหน้าหลัก</button>
+            </div>
+            
+            <!-- 5 Tabs Navigation -->
+            <div class="flex flex-wrap gap-2 mb-6">
+                <button onclick="showTab(1)" id="tab-btn-1" class="blocky-btn bg-amber-200 px-3 py-2 rounded text-sm font-bold">1. สมการเชิงเส้น</button>
+                <button onclick="showTab(2)" id="tab-btn-2" class="blocky-btn bg-gray-200 px-3 py-2 rounded text-sm font-bold">2. เศษส่วน/ทศนิยม</button>
+                <button onclick="showTab(3)" id="tab-btn-3" class="blocky-btn bg-gray-200 px-3 py-2 rounded text-sm font-bold">3. เรขาคณิต/พีทาโกรัส</button>
+                <button onclick="showTab(4)" id="tab-btn-4" class="blocky-btn bg-gray-200 px-3 py-2 rounded text-sm font-bold">4. สถิติ/ความน่าจะเป็น</button>
+                <button onclick="showTab(5)" id="tab-btn-5" class="blocky-btn bg-gray-200 px-3 py-2 rounded text-sm font-bold">5. เทคนิคโจทย์ปัญหา</button>
+            </div>
+
+            <!-- Tab Contents -->
+            <div id="tab-content" class="blocky-box bg-slate-50 p-6 rounded min-h-[220px]">
+            </div>
+        </div>
+
+        <!-- SCREEN 3: GAMEPLAY SCREEN -->
+        <div id="screen-gameplay" class="blocky-box bg-sky-50 p-6 rounded-lg hidden">
+            <!-- HUD -->
+            <div class="flex justify-between items-center bg-amber-300 p-4 rounded blocky-box mb-6">
+                <span id="hud-level" class="text-lg font-bold">ด่าน: 1 / 20</span>
+                <span id="hud-score" class="text-lg font-bold">คะแนน: 0</span>
+                <button onclick="switchScreen('home')" class="blocky-btn bg-rose-400 px-3 py-1 rounded font-bold text-sm">ออกจากเกม</button>
+            </div>
+
+            <!-- Puzzle Area -->
+            <div class="blocky-box bg-white p-6 rounded text-center mb-6">
+                <h3 id="puzzle-title" class="text-2xl font-bold mb-2"></h3>
+                <p id="puzzle-question" class="text-gray-700 text-lg mb-6"></p>
+                
+                <div id="puzzle-visual" class="text-2xl font-bold bg-amber-100 p-6 rounded inline-block blocky-box min-w-[280px]">
+                </div>
+            </div>
+
+            <!-- Answer Slot & Choices -->
+            <div class="blocky-box bg-white p-6 rounded text-center space-y-4">
+                <p class="font-bold text-gray-700">เลือกคำตอบลงในช่องว่าง:</p>
+                <div id="choices-container" class="flex flex-wrap justify-center gap-4">
+                </div>
+                
+                <div class="pt-4 flex justify-center gap-4">
+                    <button onclick="checkAnswer()" class="blocky-btn bg-emerald-400 hover:bg-emerald-500 font-bold px-6 py-2 rounded text-lg">
+                        ✔ ส่งคำตอบ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: END / CERTIFICATE SCREEN -->
+        <div id="screen-certificate" class="hidden space-y-6">
+            <div id="printable-cert" class="blocky-box bg-amber-50 p-8 rounded-lg text-center space-y-4 border-8 border-black">
+                <div class="text-5xl mb-2">🏆</div>
+                <h2 class="text-3xl font-bold text-yellow-800">เกียรติบัตรดิจิทัล (CERTIFICATE OF ACHIEVEMENT)</h2>
+                <p class="text-gray-600">ขอมอบเกียรติบัตรฉบับนี้เพื่อแสดงว่า</p>
+                
+                <div class="no-print my-4">
+                    <input type="text" id="player-name-input" oninput="updateCertName(this.value)" placeholder="กรอกชื่อ-นามสกุลของคุณ" class="blocky-box p-3 text-center text-xl w-72 rounded">
+                </div>
+                <h3 id="cert-name-display" class="text-3xl font-bold text-blue-900 underline my-2">____________________</h3>
+                
+                <p class="text-gray-700 text-lg">ได้ผ่านการทดสอบและแก้ปริศนาคณิตศาสตร์ครบถ้วนในระบบ</p>
+                <p class="text-2xl font-bold text-indigo-700">MATH PUZZLE BUILDER</p>
+                
+                <div class="mt-6 p-4 bg-white blocky-box inline-block rounded">
+                    <p id="cert-score-display" class="text-xl font-bold text-emerald-600">คะแนนรวมที่ทำได้: 0 / 20 คะแนน</p>
+                </div>
+            </div>
+
+            <div class="flex justify-center gap-4 no-print">
+                <button onclick="window.print()" class="blocky-btn bg-sky-400 text-black font-bold px-6 py-3 rounded">
+                    🖨 พิมพ์เกียรติบัตร
+                </button>
+                <button onclick="switchScreen('home')" class="blocky-btn bg-emerald-400 text-black font-bold px-6 py-3 rounded">
+                    🔄 กลับไปหน้าหลัก
+                </button>
+            </div>
+        </div>
+
+        <!-- CUSTOM MODAL -->
+        <div id="custom-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="blocky-box bg-white p-6 rounded-lg max-w-sm w-full text-center space-y-4">
+                <div id="modal-icon" class="text-4xl"></div>
+                <h3 id="modal-title" class="text-2xl font-bold"></h3>
+                <p id="modal-message" class="text-gray-700"></p>
+                <button onclick="closeModal()" class="blocky-btn bg-amber-400 font-bold px-6 py-2 rounded w-full">
+                    ตกลง
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const AppState = {
+            currentScreen: 'home',
+            levels: [],
+            currentLevelIndex: 0,
+            score: 0,
+            selectedAnswer: null,
+            playerName: ''
+        };
+
+        const lessonData = {
+            1: "<b>สมการเชิงเส้นตัวแปรเดียว:</b> ยึดหลักการจัดรูปสมการ ย้ายข้างโดยเปลี่ยนเครื่องหมายตรงกันข้าม (บวก↔ลบ, คูณ↔หาร) เพื่อหาค่าตัวแปร x",
+            2: "<b>เศษส่วนและทศนิยม:</b> การบวกลบเศษส่วนต้องทำส่วนให้เท่ากัน ส่วนการดำเนินทศนิยมให้ตั้งจุดทศนิยมให้ตรงกันเสมอ",
+            3: "<b>พีทาโกรัสและเรขาคณิต:</b> สำหรับสามเหลี่ยมมุมฉาก c² = a² + b² โดย c คือด้านตรงข้ามมุมฉากที่ยาวที่สุด",
+            4: "<b>สถิติและความน่าจะเป็น:</b> ค่าเฉลี่ย = ผลรวมข้อมูล ÷ จำนวนข้อมูล, ความน่าจะเป็น P(E) = จำนวนผลลัพธ์ที่สนใจ ÷ ผลลัพธ์ทั้งหมด",
+            5: "<b>เทคนิคการวิเคราะห์โจทย์ปัญหา:</b> 1. อ่านโจทย์แยกสิ่งที่กำหนดและสิ่งที่ถาม 2. กำหนดตัวแปร 3. สร้างสมการ 4. ตรวจสอบคำตอบ"
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchLevels();
+            showTab(1);
+        });
+
+        async function fetchLevels() {
+            try {
+                const res = await fetch('api.php');
+                const result = await res.json();
+                if (result.status === 'success') {
+                    AppState.levels = result.data;
+                }
+            } catch (err) {
+                showModal('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาตรวจสอบ Local Server', false);
+            }
+        }
+
+        function switchScreen(screenName) {
+            AppState.currentScreen = screenName;
+            ['home', 'lesson', 'gameplay', 'certificate'].forEach(s => {
+                document.getElementById(`screen-${s}`).classList.add('hidden');
+            });
+            document.getElementById(`screen-${screenName}`).classList.remove('hidden');
+        }
+
+        function showTab(tabIndex) {
+            for (let i = 1; i <= 5; i++) {
+                const btn = document.getElementById(`tab-btn-${i}`);
+                if (i === tabIndex) {
+                    btn.className = "blocky-btn bg-amber-300 px-3 py-2 rounded text-sm font-bold";
+                } else {
+                    btn.className = "blocky-btn bg-gray-200 px-3 py-2 rounded text-sm font-bold";
+                }
+            }
+            document.getElementById('tab-content').innerHTML = lessonData[tabIndex];
+        }
+
+        function startGame() {
+            if (AppState.levels.length === 0) {
+                showModal('กำลังโหลด', 'กำลังดึงข้อมูลโจทย์จากฐานข้อมูล...', false);
+                return;
+            }
+            AppState.currentLevelIndex = 0;
+            AppState.score = 0;
+            AppState.selectedAnswer = null;
+            switchScreen('gameplay');
+            loadCurrentLevel();
+        }
+
+        function loadCurrentLevel() {
+            const level = AppState.levels[AppState.currentLevelIndex];
+            AppState.selectedAnswer = null;
+
+            document.getElementById('hud-level').innerText = `ด่าน: ${level.id} / 20`;
+            document.getElementById('hud-score').innerText = `คะแนน: ${AppState.score}`;
+            document.getElementById('puzzle-title').innerText = level.title;
+            document.getElementById('puzzle-question').innerText = level.question;
+
+            const visualText = level.content.replace('?', `<span id="slot" class="inline-block px-4 py-1 mx-2 bg-yellow-200 slot-dashed rounded">[ ? ]</span>`);
+            document.getElementById('puzzle-visual').innerHTML = visualText;
+
+            const choicesContainer = document.getElementById('choices-container');
+            choicesContainer.innerHTML = '';
+            level.choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = 'blocky-btn bg-white hover:bg-amber-100 text-xl font-bold px-6 py-3 rounded';
+                btn.innerText = choice;
+                btn.onclick = () => selectChoice(choice, btn);
+                choicesContainer.appendChild(btn);
+            });
+        }
+
+        function selectChoice(value, btnElement) {
+            AppState.selectedAnswer = value;
+            document.querySelectorAll('#choices-container button').forEach(b => {
+                b.className = 'blocky-btn bg-white hover:bg-amber-100 text-xl font-bold px-6 py-3 rounded';
+            });
+            btnElement.className = 'blocky-btn bg-amber-300 text-xl font-bold px-6 py-3 rounded';
+            
+            const slot = document.getElementById('slot');
+            if (slot) slot.innerText = value;
+        }
+
+        function checkAnswer() {
+            if (!AppState.selectedAnswer) {
+                showModal('คำเตือน', 'กรุณาเลือกคำตอบก่อนส่ง!', false);
+                return;
+            }
+
+            const currentLevel = AppState.levels[AppState.currentLevelIndex];
+            const isCorrect = currentLevel.answers.includes(AppState.selectedAnswer);
+
+            if (isCorrect) {
+                AppState.score += 1;
+                showModal('ถูกต้อง! 🎉', 'คุณตอบคำตอบถูกเก่งมาก!', true, () => {
+                    nextLevel();
+                });
+            } else {
+                AppState.selectedAnswer = null;
+                const slot = document.getElementById('slot');
+                if (slot) slot.innerText = '[ ? ]';
+                document.querySelectorAll('#choices-container button').forEach(b => {
+                    b.className = 'blocky-btn bg-white hover:bg-amber-100 text-xl font-bold px-6 py-3 rounded';
+                });
+
+                showModal('คำตอบยังไม่ถูกต้อง ❌', 'ลองคิดทบทวนอีกครั้งนะ! ระบบได้รีเซ็ตช่องคำตอบให้คุณแล้ว', false);
+            }
+        }
+
+        function nextLevel() {
+            if (AppState.currentLevelIndex + 1 < AppState.levels.length) {
+                AppState.currentLevelIndex++;
+                loadCurrentLevel();
+            } else {
+                document.getElementById('cert-score-display').innerText = `คะแนนรวมที่ทำได้: ${AppState.score} / 20 คะแนน`;
+                switchScreen('certificate');
+            }
+        }
+
+        function updateCertName(val) {
+            AppState.playerName = val;
+            document.getElementById('cert-name-display').innerText = val || '____________________';
+        }
+
+        function showModal(title, message, isSuccess, callback = null) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            document.getElementById('modal-icon').innerText = isSuccess ? '✅' : '💡';
+            
+            const modal = document.getElementById('custom-modal');
+            modal.classList.remove('hidden');
+            
+            window.modalCallback = callback;
+        }
+
+        function closeModal() {
+            document.getElementById('custom-modal').classList.add('hidden');
+            if (window.modalCallback) {
+                window.modalCallback();
+                window.modalCallback = null;
+            }
+        }
+    </script>
+</body>
+</html>
